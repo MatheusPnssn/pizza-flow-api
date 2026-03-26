@@ -1,0 +1,16 @@
+# 1. Inicia o arquivo package.json com as configurações padrão
+npm init -y
+
+# 2. Instala o framework web, o driver do MySQL, o ORM Sequelize e utilitários
+# cors: Permite que o app Flutter (origem diferente) acesse a API
+# dotenv: Gerencia variáveis de ambiente (senhas e portas)
+npm install express mysql2 sequelize cors dotenv
+
+# 3. nodemon: Reinicia o servidor automaticamente a cada salvamento (Hot Reload no Backend)
+npm install --save-dev sequelize-cli nodemon
+
+# 4. Inicializa a estrutura do Sequelize (Cria pastas models, migrations, etc.)
+npx sequelize-cli init
+
+# 5. Lê os arquivos em src/migrations e cria/atualiza as tabelas no MySQL do XAMPP
+npx sequelize-cli db:migrate
