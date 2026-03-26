@@ -21,6 +21,8 @@ const authCompanyMiddleware = require('../middleware/authCompany');
  *     Produto:
  *       type: object
  *       properties:
+ *         id:
+ *           type: integer
  *         name:
  *           type: string
  *         description:
@@ -31,9 +33,26 @@ const authCompanyMiddleware = require('../middleware/authCompany');
  *         image:
  *           type: string
  *
+ *     OrderProduct:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         orderId:
+ *           type: integer
+ *         productId:
+ *           type: integer
+ *         quantity:
+ *           type: integer
+ *         priceAtTime:
+ *           type: number
+ *           format: float
+ *
  *     Pedido:
  *       type: object
  *       properties:
+ *         id:
+ *           type: integer
  *         address:
  *           type: string
  *         total_price:
@@ -44,14 +63,7 @@ const authCompanyMiddleware = require('../middleware/authCompany');
  *         items:
  *           type: array
  *           items:
- *             type: object
- *             properties:
- *               productId:
- *                 type: integer
- *               quantity:
- *                 type: integer
- *               priceAtTime:
- *                 type: number
+ *             $ref: '#/components/schemas/OrderProduct'
  */
 
 // --- ROTAS PÚBLICAS ---
