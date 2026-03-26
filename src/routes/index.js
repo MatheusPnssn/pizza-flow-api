@@ -134,6 +134,24 @@ router.post('/logout', authMiddleware, UserController.logout);
  */
 router.get('/products', ProductController.getAll);
 
+/**
+ * @swagger
+ * /:
+ *   get:
+ *     summary: Listar produtos (cardápio)
+ *     tags: [Produtos]
+ *     parameters:
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *         description: Filtrar por tipo (ex. Pizza, Bebida)
+ *     responses:
+ *       200:
+ *         description: Lista de produtos.
+ */
+router.get('/', ProductController.getAll);
+
 // --- ROTAS CLIENTE (PRECISA DE TOKEN) ---
 router.use(authMiddleware);
 
