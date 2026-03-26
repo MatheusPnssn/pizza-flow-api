@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
+const { TokenBlacklist } = require('../models'); // Importe o model da Blacklist
 
-const authMiddleware = (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
@@ -19,15 +20,30 @@ const authMiddleware = (req, res, next) => {
         return res.status(401).json({ error: 'Token malformatado' });
     }
 
-    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-        if (err) {
-            return res.status(401).json({ error: 'Token inválido ou expirado' });
+    try {
+        // 1. Verificar se o token está na Blacklist (Logout já foi feito)
+        const isBlacklisted = await TokenBlacklist.findOne({ where: { token } });
+
+        if (isBlacklisted) {
+            return res.status(401).json({ error: 'Sessão encerrada. Por favor, faça login novamente.' });
         }
 
-        req.userId = decoded.id;
-        
-        return next(); 
-    });
+        // 2. Verificar a validade e expiração do JWT
+        jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+            if (err) {
+                return res.status(401).json({ error: 'Token inválido ou expirado' });
+            }
+
+            // 3. Injetar os dados no objeto da requisição
+            req.userId = decoded.id;
+            req.userType = decoded.type; // Útil para o middleware de Admin
+
+            return next();
+        });
+
+    } catch (error) {
+        return res.status(500).json({ error: 'Erro interno na validação do token' });
+    }
 };
 
 module.exports = authMiddleware;

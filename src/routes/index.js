@@ -106,6 +106,18 @@ router.post('/login', UserController.login);
 
 /**
  * @swagger
+ * /logout:
+ *   post:
+ *     summary: Finalizar sessão (Logout)
+ *     tags: [Autenticação]
+ *     responses:
+ *       200:
+ *         description: Logout realizado com sucesso (o cliente deve descartar o token).
+ */
+router.post('/logout', authMiddleware, UserController.logout);
+
+/**
+ * @swagger
  * /products:
  *   get:
  *     summary: Listar produtos (cardápio)

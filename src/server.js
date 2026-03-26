@@ -6,11 +6,19 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
 const app = express();
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // 1. Middlewares de análise (Parsing)
 app.use(cors());
 app.use(express.json());
+
+// Middleware para capturar erros de JSON malformado
+app.use((err, req, res, next) => {
+    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+        return res.status(400).json({ error: "JSON inválido ou corpo vazio inesperado" });
+    }
+    next();
+});
 
 // 2. Configuração do Swagger
 const swaggerOptions = {

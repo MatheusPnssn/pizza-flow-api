@@ -1,7 +1,7 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const Controller = require('./Controller').default;
-const { User } = require('../models');
+const { User, TokenBlacklist } = require('../models');
 
 class UserController extends Controller{
     static async createUser(req, res){
@@ -116,6 +116,16 @@ class UserController extends Controller{
             return res.status(200).json(users);
         } catch (error) {
             return res.status(500).json({ error: 'Erro ao buscar usuários' });
+        }
+    }
+
+    static async logout(req, res) {
+        try {
+            const token = req.headers.authorization.split(' ')[1];
+            await TokenBlacklist.create({ token });
+            return res.status(200).json({ message: 'Logout realizado. Token invalidadado.' });
+        } catch (error) {
+            return res.status(500).json({ error: 'Erro ao processar logout' });
         }
     }
 }
