@@ -51,7 +51,10 @@ class Controller {
         let fields =  {
             name: 'Nome',
             password: 'Senha',
-            email: 'Email'
+            email: 'Email',
+            type: 'Tipo',
+            price: 'Preço',
+            status: 'status',
         };
 
         return fields[fieldName]
