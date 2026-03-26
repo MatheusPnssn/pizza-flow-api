@@ -36,7 +36,7 @@ const authMiddleware = async (req, res, next) => {
 
             // 3. Injetar os dados no objeto da requisição
             req.userId = decoded.id;
-            req.userType = decoded.type; // Útil para o middleware de Admin
+            req.userType = decoded.type;  
 
             return next();
         });
