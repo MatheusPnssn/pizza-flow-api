@@ -15,7 +15,18 @@ const authCompanyMiddleware = require('../middleware/authCompany');
  *       properties:
  *         id:
  *           type: integer
+ *         name:
+ *           type: string
  *         email:
+ *           type: string
+ *         phone:
+ *           type: string
+ *         image:
+ *           type: string
+ *         type:
+ *           type: string
+ *           example: client
+ *         password:
  *           type: string
  *
  *     Produto:
