@@ -8,7 +8,7 @@ module.exports = {
     // Criptografando a senha antes de salvar
     const hashedPassword = await bcrypt.hash('admin123', 10);
     const adminEmail = 'admin@pizzaflow.com';
-    const user = await User.findOne({ where: { adminEmail } });
+    const user = await User.findOne({ where: { email: adminEmail } });
     if (user) {
       return true;
     }
