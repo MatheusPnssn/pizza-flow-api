@@ -1,15 +1,21 @@
 'use strict';
 const bcrypt = require('bcrypt');
+const { User } = require('../models');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up (queryInterface, Sequelize) {
     // Criptografando a senha antes de salvar
     const hashedPassword = await bcrypt.hash('admin123', 10);
+    const adminEmail = 'admin@pizzaflow.com';
+    const user = await User.findOne({ where: { adminEmail } });
+    if (user) {
+      return true;
+    }
 
     return queryInterface.bulkInsert('Users', [{
       name: 'Admin Pizza Flow',
-      email: 'admin@pizzaflow.com',
+      email: adminEmail,
       password: hashedPassword,
       type: 'admin', // Aqui definimos o cargo
       createdAt: new Date(),
