@@ -9,8 +9,14 @@ const authCompanyMiddleware = require('../middleware/authCompany');
 /**
  * @swagger
  * components:
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ *
  *   schemas:
- *     User:
+ *     UserResponse:
  *       type: object
  *       properties:
  *         id:
@@ -25,7 +31,16 @@ const authCompanyMiddleware = require('../middleware/authCompany');
  *           type: string
  *         type:
  *           type: string
- *           example: client
+ *           enum: [customer, admin]
+ *
+ *     UserCreate:
+ *       type: object
+ *       required: [name, email, password]
+ *       properties:
+ *         name:
+ *           type: string
+ *         email:
+ *           type: string
  *         password:
  *           type: string
  *
@@ -40,24 +55,32 @@ const authCompanyMiddleware = require('../middleware/authCompany');
  *           type: string
  *         price:
  *           type: number
- *           format: float
+ *         type:
+ *           type: string
+ *           example: Pizza
  *         image:
  *           type: string
  *
  *     OrderProduct:
  *       type: object
  *       properties:
- *         id:
- *           type: integer
- *         orderId:
- *           type: integer
  *         productId:
  *           type: integer
  *         quantity:
  *           type: integer
  *         priceAtTime:
  *           type: number
- *           format: float
+ *
+ *     PedidoCreate:
+ *       type: object
+ *       required: [address, items]
+ *       properties:
+ *         address:
+ *           type: string
+ *         items:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/OrderProduct'
  *
  *     Pedido:
  *       type: object
@@ -70,11 +93,23 @@ const authCompanyMiddleware = require('../middleware/authCompany');
  *           type: number
  *         status:
  *           type: string
- *           example: Pendente
  *         items:
  *           type: array
  *           items:
  *             $ref: '#/components/schemas/OrderProduct'
+ *     UserUpdate:
+ *       type: object
+ *       properties:
+ *        name:
+ *          type: string
+ *        phone:
+ *          type: string
+ *        image:
+ *          type: string 
+ *        items:
+ *          type: array
+ *          items:
+ *             $ref: '#/components/schemas/UserUpdate'
  */
 
 // --- ROTAS PÚBLICAS ---
@@ -83,8 +118,101 @@ const authCompanyMiddleware = require('../middleware/authCompany');
  * @swagger
  * /register:
  *   post:
- *     summary: Criar uma nova conta de usuário
+ *     summary: Criar uma nova conta
  *     tags: [Autenticação]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UserCreate'
+ *     responses:
+ *       201:
+ *         description: Usuário criado com sucesso
+ */
+router.post('/register', UserController.createUser);
+
+/**
+ * @swagger
+ * /login:
+ *   post:
+ *     summary: Login no sistema
+ *     tags: [Autenticação]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password]
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Login realizado com sucesso
+ */
+router.post('/login', UserController.login);
+
+/**
+ * @swagger
+ * /logout:
+ *   post:
+ *     summary: Logout (invalidar token)
+ *     tags: [Autenticação]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Logout realizado
+ */
+router.post('/logout', authMiddleware, UserController.logout);
+
+/**
+ * @swagger
+ * /products:
+ *   get:
+ *     summary: Listar produtos
+ *     tags: [Produtos]
+ *     parameters:
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *         description: Filtrar por tipo
+ *     responses:
+ *       200:
+ *         description: Lista de produtos
+ */
+router.get('/products', ProductController.getAll);
+
+// --- CLIENTE ---
+router.use(authMiddleware);
+
+/**
+ * @swagger
+ * /profile:
+ *   get:
+ *     summary: Perfil do usuário logado
+ *     tags: [Cliente / Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Dados do usuário
+ */
+router.get('/profile', UserController.getProfile);
+
+/**
+ * @swagger
+ * /profile:
+ *   put:
+ *     summary: Atualizar perfil do usuário logado
+ *     tags: [Cliente / Admin]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -94,91 +222,21 @@ const authCompanyMiddleware = require('../middleware/authCompany');
  *             properties:
  *               name:
  *                 type: string
- *               email:
+ *               phone:
  *                 type: string
- *               password:
- *                 type: string
- *     responses:
- *       201:
- *         description: Usuário criado com sucesso.
- */
-router.post('/register', UserController.createUser);
-
-/**
- * @swagger
- * /login:
- *   post:
- *     summary: Realizar login no sistema
- *     tags: [Autenticação]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               email:
- *                 type: string
- *               password:
+ *               image:
  *                 type: string
  *     responses:
  *       200:
- *         description: Login realizado com sucesso.
+ *         description: Perfil atualizado com sucesso
  */
-router.post('/login', UserController.login);
-
-/**
- * @swagger
- * /logout:
- *   post:
- *     summary: Finalizar sessão (Logout)
- *     tags: [Autenticação]
- *     responses:
- *       200:
- *         description: Logout realizado com sucesso (o cliente deve descartar o token).
- */
-router.post('/logout', authMiddleware, UserController.logout);
-
-/**
- * @swagger
- * /products:
- *   get:
- *     summary: Listar produtos (cardápio)
- *     tags: [Produtos]
- *     parameters:
- *       - in: query
- *         name: type
- *         schema:
- *           type: string
- *         description: Filtrar por tipo (ex. Pizza, Bebida)
- *     responses:
- *       200:
- *         description: Lista de produtos.
- */
-router.get('/products', ProductController.getAll);
-
-// --- ROTAS CLIENTE (PRECISA DE TOKEN) ---
-router.use(authMiddleware);
-
-/**
- * @swagger
- * /profile:
- *   get:
- *     summary: Visualiza perfil do usuário logado
- *     tags: [Cliente / Admin]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Dados do perfil.
- */
-router.get('/profile', UserController.getProfile);
+router.put('/profile', UserController.updateProfile);
 
 /**
  * @swagger
  * /orders:
  *   post:
- *     summary: Realiza um novo pedido
+ *     summary: Criar pedido
  *     tags: [Cliente]
  *     security:
  *       - bearerAuth: []
@@ -187,27 +245,27 @@ router.get('/profile', UserController.getProfile);
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/Pedido'
+ *             $ref: '#/components/schemas/PedidoCreate'
  *     responses:
  *       201:
- *         description: Pedido criado com sucesso.
+ *         description: Pedido criado
  */
 router.post('/orders', OrderController.createOrder);
 
-// --- ROTAS ADMIN (PRECISA SER ADMIN) ---
+// --- ADMIN ---
 router.use(authCompanyMiddleware);
 
 /**
  * @swagger
  * /dashboard:
  *   get:
- *     summary: Resumo de métricas para o administrador
+ *     summary: Métricas do sistema
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Dados do dashboard carregados.
+ *         description: Dados do dashboard
  */
 router.get('/dashboard', OrderController.getDashboard);
 
@@ -215,13 +273,13 @@ router.get('/dashboard', OrderController.getDashboard);
  * @swagger
  * /users:
  *   get:
- *     summary: Lista todos os clientes cadastrados
+ *     summary: Listar usuários
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Lista de usuários.
+ *         description: Lista de usuários
  */
 router.get('/users', UserController.getUsers);
 
@@ -229,7 +287,7 @@ router.get('/users', UserController.getUsers);
  * @swagger
  * /products:
  *   post:
- *     summary: Cria um novo produto no cardápio
+ *     summary: Criar produto
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
@@ -241,7 +299,7 @@ router.get('/users', UserController.getUsers);
  *             $ref: '#/components/schemas/Produto'
  *     responses:
  *       201:
- *         description: Produto criado.
+ *         description: Produto criado
  */
 router.post('/products', ProductController.createProduct);
 
@@ -249,7 +307,7 @@ router.post('/products', ProductController.createProduct);
  * @swagger
  * /products/{id}:
  *   put:
- *     summary: Atualiza um produto existente
+ *     summary: Atualizar produto
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
@@ -267,7 +325,7 @@ router.post('/products', ProductController.createProduct);
  *             $ref: '#/components/schemas/Produto'
  *     responses:
  *       200:
- *         description: Produto atualizado.
+ *         description: Produto atualizado
  */
 router.put('/products/:id', ProductController.updateProduct);
 
@@ -275,7 +333,7 @@ router.put('/products/:id', ProductController.updateProduct);
  * @swagger
  * /products/{id}:
  *   delete:
- *     summary: Remove um produto do cardápio
+ *     summary: Remover produto
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
@@ -283,11 +341,9 @@ router.put('/products/:id', ProductController.updateProduct);
  *       - in: path
  *         name: id
  *         required: true
- *         schema:
- *           type: integer
  *     responses:
  *       200:
- *         description: Produto removido.
+ *         description: Produto removido
  */
 router.delete('/products/:id', ProductController.deleteProduct);
 
@@ -295,7 +351,7 @@ router.delete('/products/:id', ProductController.deleteProduct);
  * @swagger
  * /admin/orders:
  *   get:
- *     summary: Lista todos os pedidos realizados
+ *     summary: Listar pedidos
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
@@ -306,7 +362,7 @@ router.delete('/products/:id', ProductController.deleteProduct);
  *           type: string
  *     responses:
  *       200:
- *         description: Lista de pedidos.
+ *         description: Lista de pedidos
  */
 router.get('/admin/orders', OrderController.getAllOrders);
 
@@ -314,7 +370,7 @@ router.get('/admin/orders', OrderController.getAllOrders);
  * @swagger
  * /admin/orders/{id}/status:
  *   put:
- *     summary: Altera o status de um pedido
+ *     summary: Atualizar status do pedido
  *     tags: [Admin]
  *     security:
  *       - bearerAuth: []
@@ -322,21 +378,20 @@ router.get('/admin/orders', OrderController.getAllOrders);
  *       - in: path
  *         name: id
  *         required: true
- *         schema:
- *           type: integer
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required: [status]
  *             properties:
  *               status:
  *                 type: string
  *                 example: Concluido
  *     responses:
  *       200:
- *         description: Status atualizado.
+ *         description: Status atualizado
  */
 router.put('/admin/orders/:id/status', OrderController.updateStatus);
 

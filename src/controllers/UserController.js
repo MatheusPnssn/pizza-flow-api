@@ -110,6 +110,32 @@ class UserController extends Controller{
         }
     }
 
+    static async updateProfile(req, res) {
+        try {
+            const user = await User.findByPk(req.userId);
+
+            if (!user) {
+                return res.status(404).json({ error: 'Usuário não encontrado' });
+            }
+
+            const { name, phone, image } = req.body;
+
+            await user.update({
+                name: name ?? user.name,
+                phone: phone ?? user.phone,
+                image: image ?? user.image
+            });
+
+            const userResponse = user.toJSON();
+            delete userResponse.password;
+
+            return res.status(200).json(userResponse);
+
+        } catch (error) {
+            return res.status(500).json({ error: 'Erro ao atualizar perfil' });
+        }
+    }
+
     static async getUsers(req, res){
         try {
             const users = await User.findAll();
