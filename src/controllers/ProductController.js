@@ -6,14 +6,18 @@ class ProductController extends Controller {
     // UC11: Visualizar cardápio/produtos (Acesso: Cliente e Admin)
     static async getAll(req, res) {
         try {
-            const { type } = req.query; // Pega o ?type= na URL
+            const { type } = req.query;
             const where = {};
-            
+
             if (type) {
-                where.type = type; // Filtra no banco se o type for enviado
+                where.type = type;
             }
 
-            const products = await Products.findAll({ where });
+            const products = await Products.findAll({
+                where,
+                order: [['createdAt', 'DESC']]
+            });
+
             return res.status(200).json(products);
         } catch (error) {
             return res.status(500).json({ error: 'Erro ao buscar produtos' });
