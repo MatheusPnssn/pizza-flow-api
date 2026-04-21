@@ -141,6 +141,30 @@ class OrderController extends Controller {
             return res.status(500).json({ error: 'Erro ao atualizar status do pedido' });
         }
     }
+
+    // UC13: Buscar pedidos do usuário logado (Acesso: Cliente)
+    static async getUserOrders(req, res) {
+        try {
+            // Buscamos todos os pedidos onde o userId é igual ao id do token
+            const orders = await Orders.findAll({
+                where: { userId: req.userId },
+                order: [['createdAt', 'DESC']], // Mais recentes primeiro
+                include: [
+                    {
+                        model: OrderProducts,
+                        as: 'items', // Associa os produtos de cada pedido
+                        // Se quiser incluir os detalhes do produto (nome, imagem)
+                        // você pode aninhar outro include aqui
+                    }
+                ]
+            });
+
+            return res.status(200).json(orders);
+        } catch (error) {
+            console.error("ERRO AO BUSCAR PEDIDOS DO USUÁRIO:", error);
+            return res.status(500).json({ error: 'Erro ao buscar seus pedidos' });
+        }
+    }
 }
 
 module.exports = OrderController;

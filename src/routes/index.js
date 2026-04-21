@@ -293,6 +293,17 @@ router.put('/profile', UserController.updateProfile);
  */
 router.post('/orders', OrderController.createOrder);
 
+/**
+ * @swagger
+ * /my-orders:
+ *   get:
+ *     summary: Listar pedidos de usuario
+ *     tags: [Cliente]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/my-orders', OrderController.getUserOrders);
+
 // --- ADMIN ---
 router.use(authCompanyMiddleware);
 
