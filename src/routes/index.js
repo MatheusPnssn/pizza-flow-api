@@ -5,6 +5,18 @@ const ProductController = require('../controllers/ProductController');
 const OrderController = require('../controllers/OrderController');
 const authMiddleware = require('../middleware/auth');
 const authCompanyMiddleware = require('../middleware/authCompany');
+const multer = require('multer');
+const path = require('path');
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'public/uploads/'); // Salva na pasta public/uploads
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + path.extname(file.originalname)); // Nome único
+    }
+});
+const upload = multer({ storage: storage });
 
 /**
  * @swagger
@@ -301,7 +313,7 @@ router.get('/users', UserController.getUsers);
  *       201:
  *         description: Produto criado
  */
-router.post('/products', ProductController.createProduct);
+router.post('/products', upload.single('image'), ProductController.createProduct);
 
 /**
  * @swagger
@@ -327,7 +339,7 @@ router.post('/products', ProductController.createProduct);
  *       200:
  *         description: Produto atualizado
  */
-router.put('/products/:id', ProductController.updateProduct);
+router.put('/products/:id', upload.single('image'), ProductController.updateProduct);
 
 /**
  * @swagger

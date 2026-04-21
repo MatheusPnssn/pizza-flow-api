@@ -1,6 +1,7 @@
 const Controller = require('./Controller').default;
 const { Products } = require('../models');
-
+const fs = require('fs');
+const path = require('path');
 class ProductController extends Controller {
     // UC11: Visualizar cardápio/produtos (Acesso: Cliente e Admin)
     static async getAll(req, res) {
@@ -24,16 +25,27 @@ class ProductController extends Controller {
         let validate = await Controller.validate({
             name: 'required|min:2',
             price: 'required',
-            type: 'required' // Ex: Pizza, Bebida
+            type: 'required'
         }, req.body);
 
-        if (validate.status != 200) {
+        if (validate.status !== 200) {
+            // Se falhar a validação, mas enviou imagem, apaga a imagem que o multer salvou
+            if (req.file) {
+                fs.unlinkSync(req.file.path);
+            }
             return res.status(validate.status).json(validate);
         }
 
         try {
-            // Campos baseados na migration create-products
-            const { name, description, price, type, image } = req.body;
+            const { name, description, price, type } = req.body;
+
+            // Pega o caminho da imagem salva pelo Multer (se houver)
+            let image = req.body.image; // fallback para URL em texto (caso ainda mande link)
+            if (req.file) {
+                // Salva o caminho relativo para o banco de dados
+                image = `/uploads/${req.file.filename}`;
+            }
+
             const product = await Products.create({
                 name,
                 description,
@@ -45,13 +57,13 @@ class ProductController extends Controller {
             return res.status(201).json(product);
         } catch (error) {
             console.error(error);
+            if (req.file) fs.unlinkSync(req.file.path); // Apaga em caso de erro no DB
             return res.status(500).json({ error: 'Erro ao criar produto' });
         }
     }
 
     // UC02: Editar produto (Acesso: Admin)
     static async updateProduct(req, res) {
-        // Validação básica dos campos obrigatórios para edição
         let validate = await Controller.validate({
             name: 'required|min:2',
             price: 'required',
@@ -59,6 +71,7 @@ class ProductController extends Controller {
         }, req.body);
 
         if (validate.status != 200) {
+            if (req.file) fs.unlinkSync(req.file.path);
             return res.status(validate.status).json(validate);
         }
 
@@ -67,11 +80,29 @@ class ProductController extends Controller {
             const product = await Products.findByPk(id);
 
             if (!product) {
+                if (req.file) fs.unlinkSync(req.file.path);
                 return res.status(404).json({ error: 'Produto não encontrado' });
             }
 
-            // Atualiza os dados com o que veio no corpo da requisição
-            await product.update(req.body);
+            let image = product.image; // Mantém a imagem atual por padrão
+
+            // Se uma NOVA imagem foi enviada
+            if (req.file) {
+                image = `/uploads/${req.file.filename}`;
+
+                // Apaga a imagem ANTIGA do servidor (se existir e for um arquivo local)
+                if (product.image && product.image.startsWith('/uploads/')) {
+                    const oldImagePath = path.join(__dirname, '..', 'public', product.image);
+                    if (fs.existsSync(oldImagePath)) {
+                        fs.unlinkSync(oldImagePath);
+                    }
+                }
+            } else if (req.body.image) {
+                // Caso envie uma URL em texto na edição
+                image = req.body.image;
+            }
+
+            await product.update({ ...req.body, image });
 
             return res.status(200).json({
                 message: "Produto atualizado com sucesso",
@@ -79,6 +110,7 @@ class ProductController extends Controller {
             });
         } catch (error) {
             console.error(error);
+            if (req.file) fs.unlinkSync(req.file.path);
             return res.status(500).json({ error: 'Erro ao atualizar produto' });
         }
     }
@@ -93,7 +125,14 @@ class ProductController extends Controller {
                 return res.status(404).json({ error: 'Produto não encontrado' });
             }
 
-            // Remove o registro do banco de dados
+            // Apaga a imagem associada do servidor antes de deletar do banco
+            if (product.image && product.image.startsWith('/uploads/')) {
+                const imagePath = path.join(__dirname, '..', 'public', product.image);
+                if (fs.existsSync(imagePath)) {
+                    fs.unlinkSync(imagePath);
+                }
+            }
+
             await product.destroy();
 
             return res.status(200).json({ message: 'Produto removido com sucesso' });
