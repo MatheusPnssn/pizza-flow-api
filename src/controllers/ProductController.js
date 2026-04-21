@@ -28,6 +28,9 @@ class ProductController extends Controller {
             type: 'required'
         }, req.body);
 
+        console.log('FILE:', req.file);
+        console.log('BODY:', req.body);
+
         if (validate.status !== 200) {
             // Se falhar a validação, mas enviou imagem, apaga a imagem que o multer salvou
             if (req.file) {
