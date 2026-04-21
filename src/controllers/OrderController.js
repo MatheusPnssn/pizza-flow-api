@@ -56,16 +56,25 @@ class OrderController extends Controller {
                 where.status = status;
             }
 
-            // VAMOS BUSCAR APENAS OS PEDIDOS, SEM FAZER JOIN (INCLUDE) COM OUTRAS TABELAS
             const orders = await Orders.findAll({
                 where,
-                order: [['createdAt', 'DESC']]
-                // include: [...]  <-- APAGUE OU COMENTE QUALQUER LINHA DE 'include' AQUI
+                order: [['createdAt', 'DESC']],
+                include: [
+                    {
+                        model: User,
+                        as: 'user', // Deve ser o mesmo 'as' que colocamos no orders.js
+                        attributes: ['name']
+                    },
+                    {
+                        model: OrderProducts,
+                        as: 'items' // Deve ser o mesmo 'as' que colocamos no orders.js
+                    }
+                ]
             });
 
             return res.status(200).json(orders);
         } catch (error) {
-            console.error("ERRO DETALHADO:", error);
+            console.error("ERRO DETALHADO NO GET ALL ORDERS:", error);
             return res.status(500).json({ error: 'Erro ao buscar pedidos' });
         }
     }
