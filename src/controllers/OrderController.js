@@ -78,6 +78,14 @@ class OrderController extends Controller {
 
     static async getDashboard(req, res) {
         try {
+            const revenueByDay = await Orders.findAll({
+                attributes: [
+                    [Sequelize.fn('DATE', Sequelize.col('createdAt')), 'date'],
+                    [Sequelize.fn('SUM', Sequelize.col('total_price')), 'total']
+                ],
+                group: ['date'],
+                order: [['date', 'ASC']]
+            });
             const totalRevenue = await Orders.sum('total_price');
             const totalOrders = await Orders.count();
             const totalCustomers = await User.count({ where: { type: 'customer' } });
@@ -92,7 +100,10 @@ class OrderController extends Controller {
                 faturamento: totalRevenue || 0,
                 pedidos: totalOrders || 0,
                 usuarios: totalCustomers || 0,
-                recentOrders: recentOrders
+                faturamentoPorDia: revenueByDay.map(item => ({
+                    date: item.get('date'),
+                    total: Number(item.get('total'))
+                }))
             });
         } catch (error) {
             console.error("ERRO NO DASHBOARD:", error);
