@@ -340,7 +340,10 @@ router.get('/users', UserController.getUsers);
  *       201:
  *         description: Produto criado
  */
-router.post('/products', upload.single('image'), ProductController.createProduct);
+router.post('/products', (req, res, next) => {
+    console.log('HEADERS:', req.headers['content-type']);
+    next();
+}, upload.single('image'), ProductController.createProduct);
 
 /**
  * @swagger
