@@ -145,16 +145,22 @@ class OrderController extends Controller {
     // UC13: Buscar pedidos do usuário logado (Acesso: Cliente)
     static async getUserOrders(req, res) {
         try {
+            const { status } = req.query;
+            const where = {userId: req.userId };
+
+            if (status && status !== 'Todos') {
+                where.status = status;
+            }
+
+
             // Buscamos todos os pedidos onde o userId é igual ao id do token
             const orders = await Orders.findAll({
-                where: { userId: req.userId },
+                where,
                 order: [['createdAt', 'DESC']], // Mais recentes primeiro
                 include: [
                     {
                         model: OrderProducts,
-                        as: 'items', // Associa os produtos de cada pedido
-                        // Se quiser incluir os detalhes do produto (nome, imagem)
-                        // você pode aninhar outro include aqui
+                        as: 'items',
                     }
                 ]
             });
