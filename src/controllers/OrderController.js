@@ -80,8 +80,8 @@ class OrderController extends Controller {
         try {
             const revenueByDay = await Orders.findAll({
                 attributes: [
-                    [Sequelize.fn('DATE', Sequelize.col('createdAt')), 'date'],
-                    [Sequelize.fn('SUM', Sequelize.col('total_price')), 'total']
+                    [sequelize.fn('DATE', sequelize.col('createdAt')), 'date'],
+                    [sequelize.fn('SUM', sequelize.col('total_price')), 'total']
                 ],
                 group: ['date'],
                 order: [['date', 'ASC']]
