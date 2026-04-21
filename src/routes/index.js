@@ -7,17 +7,25 @@ const authMiddleware = require('../middleware/auth');
 const authCompanyMiddleware = require('../middleware/authCompany');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
+
+// 2. DEFINIMOS O CAMINHO DA PASTA
+const uploadPath = 'public/uploads/';
+
+// 3. TRAVA DE SEGURANÇA: Se a pasta não existir no Render, o Node cria ela
+if (!fs.existsSync(uploadPath)) {
+    fs.mkdirSync(uploadPath, { recursive: true });
+}
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'public/uploads/'); // Salva na pasta public/uploads
+        cb(null, uploadPath);  
     },
     filename: function (req, file, cb) {
         cb(null, Date.now() + path.extname(file.originalname)); // Nome único
     }
 });
 const upload = multer({ storage: storage });
-
 /**
  * @swagger
  * components:

@@ -97,8 +97,7 @@ class ProductController extends Controller {
                         fs.unlinkSync(oldImagePath);
                     }
                 }
-            } else if (req.body.image) {
-                // Caso envie uma URL em texto na edição
+            } else if (req.body.image && typeof req.body.image === 'string') {
                 image = req.body.image;
             }
 
