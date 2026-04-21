@@ -58,11 +58,24 @@ class OrderController extends Controller {
 
             const orders = await Orders.findAll({
                 where,
-                include: [{ model: User, as: 'user', attributes: ['name'] }],
+                include: [
+                    {
+                        model: User,
+                        attributes: ['name']
+                        // Removi o "as: 'user'" daqui. Geralmente o Sequelize consegue
+                        // achar a relação sozinho se você não forçar um apelido.
+                    },
+                    {
+                        model: OrderProducts, // Isso traz os produtos do pedido para o App contar
+                    }
+                ],
                 order: [['createdAt', 'DESC']]
             });
+
             return res.status(200).json(orders);
         } catch (error) {
+            // ESSA É A LINHA MAIS IMPORTANTE: Vai imprimir o motivo exato se falhar de novo!
+            console.error("ERRO DETALHADO NO GET ALL ORDERS:", error);
             return res.status(500).json({ error: 'Erro ao buscar pedidos' });
         }
     }
