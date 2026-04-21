@@ -27,7 +27,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-app.use('/uploads', express.static('public/uploads'));
+router.use('/uploads', express.static('public/uploads'));
 
 /**
  * @swagger
