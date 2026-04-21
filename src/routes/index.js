@@ -26,6 +26,25 @@ const storage = multer.diskStorage({
     }
 });
 const upload = multer({ storage: storage });
+
+router.get('/files', (req, res) => {
+    const directoryPath = path.resolve('public', 'uploads');
+    fs.readdir(directoryPath, (err, files) => {
+        if (err) {
+            console.error("Erro ao ler o diretório:", err);
+            return res.status(500).json({
+                error: 'Não foi possível ler a pasta.',
+                details: err.message
+            });
+        }
+        return res.json({
+            message: "Arquivos encontrados com sucesso!",
+            total_files: files.length,
+            filenames: files
+        });
+    });
+});
+
 /**
  * @swagger
  * components:
@@ -414,5 +433,8 @@ router.get('/admin/orders', OrderController.getAllOrders);
  *         description: Status atualizado
  */
 router.put('/admin/orders/:id/status', OrderController.updateStatus);
+
+
+
 
 module.exports = router;
