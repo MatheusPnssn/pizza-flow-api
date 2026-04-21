@@ -49,33 +49,23 @@ class OrderController extends Controller {
     // UC03: Visualizar pedidos (Acesso: Admin) [cite: 37]
     static async getAllOrders(req, res) {
         try {
-            const { status } = req.query; // Pega o ?status= na URL
+            const { status } = req.query;
             const where = {};
 
             if (status && status !== 'Todos') {
                 where.status = status;
             }
 
+            // VAMOS BUSCAR APENAS OS PEDIDOS, SEM FAZER JOIN (INCLUDE) COM OUTRAS TABELAS
             const orders = await Orders.findAll({
                 where,
-                include: [
-                    {
-                        model: User,
-                        attributes: ['name']
-                        // Removi o "as: 'user'" daqui. Geralmente o Sequelize consegue
-                        // achar a relação sozinho se você não forçar um apelido.
-                    },
-                    {
-                        model: OrderProducts, // Isso traz os produtos do pedido para o App contar
-                    }
-                ],
                 order: [['createdAt', 'DESC']]
+                // include: [...]  <-- APAGUE OU COMENTE QUALQUER LINHA DE 'include' AQUI
             });
 
             return res.status(200).json(orders);
         } catch (error) {
-            // ESSA É A LINHA MAIS IMPORTANTE: Vai imprimir o motivo exato se falhar de novo!
-            console.error("ERRO DETALHADO NO GET ALL ORDERS:", error);
+            console.error("ERRO DETALHADO:", error);
             return res.status(500).json({ error: 'Erro ao buscar pedidos' });
         }
     }
