@@ -1,5 +1,5 @@
 const Controller = require('./Controller').default;
-const { Orders, OrderProducts, sequelize } = require('../models');
+const { Orders, OrderProducts, User, sequelize } = require('../models');
 
 class OrderController extends Controller {
     // UC12: Criar pedido (Acesso: Cliente logado) [cite: 29]
@@ -75,28 +75,31 @@ class OrderController extends Controller {
             // 2. Contagem total de pedidos
             const totalOrders = await Orders.count();
 
-            // 3. Contagem total de clientes (onde type é 'customer')
+            // 3. Contagem total de clientes
+            // ATENÇÃO: Verifique se o modelo User foi importado no topo deste arquivo!
             const totalCustomers = await User.count({ where: { type: 'customer' } });
 
-            // 4. Últimos 5 pedidos para exibir na lista do Dashboard
+            // 4. Se o "include" estiver dando erro por falta de associação no Sequelize,
+            // comente a linha do "include" abaixo para testar.
             const recentOrders = await Orders.findAll({
                 limit: 5,
                 order: [['createdAt', 'DESC']],
-                include: [{ model: User, as: 'user', attributes: ['name'] }]
+                // include: [{ model: User, as: 'user', attributes: ['name'] }] // <- Comente se der erro
             });
 
+            // 5. MUDANÇA IMPORTANTE: Retornando com os nomes EXATOS que o App React Native espera
             return res.status(200).json({
-                revenue: totalRevenue || 0,
-                ordersCount: totalOrders,
-                customersCount: totalCustomers,
+                faturamento: totalRevenue || 0,
+                pedidos: totalOrders || 0,
+                usuarios: totalCustomers || 0,
                 recentOrders: recentOrders
             });
         } catch (error) {
-            console.error(error);
+            // Isso vai imprimir no seu terminal o ERRO REAL do banco de dados
+            console.error("ERRO NO DASHBOARD:", error);
             return res.status(500).json({ error: 'Erro ao carregar dados do dashboard' });
         }
     }
-
     // UC04: Editar status do pedido
     static async updateStatus(req, res) {
         let validate = await Controller.validate({
